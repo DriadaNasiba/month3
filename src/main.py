@@ -2,25 +2,32 @@ import flet as ft
 
 
 def main(page: ft.Page):
-    counter = ft.Text("0", size=50, data=0)
+    text_field = ft.TextField(label="Введите текст", autofocus=True)
+    page.add(text_field)
 
-    def increment_click(e):
-        counter.data += 1
-        counter.value = str(counter.data)
-        counter.update()
-
-    page.floating_action_button = ft.FloatingActionButton(
-        icon=ft.Icons.ADD, on_click=increment_click
-    )
-    page.add(
-        ft.SafeArea(
-            ft.Container(
-                counter,
-                alignment=ft.alignment.center,
-            ),
-            expand=True,
-        )
-    )
+ft.app(target=main)
 
 
-ft.app(main)
+import flet as ft
+
+def main(page: ft.Page):
+    friends = ["Марина", "Алексей", "Петр", "Анна", "Дмитрий"]
+
+    
+    def on_text_change(e):
+        entered_text = text_field.value
+        if entered_text in friends:
+            print(f"Имя '{entered_text}' найдено в списке друзей!")
+        else:
+            print(f"Имя '{entered_text}' не найдено в списке.")
+
+
+    text_field = ft.TextField(label="Введите имя", autofocus=True)
+    text_field.on_change = on_text_change 
+
+
+    page.add(text_field)
+
+ft.app(target=main)
+
+
