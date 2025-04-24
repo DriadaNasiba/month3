@@ -1,67 +1,43 @@
-import flet as ft
+import sqlite3
 
-def main(page: ft.Page):
-    expenses = []
-    expenses_list_view = ft.Column(scroll=ft.ScrollMode.ALWAYS)  
-    total_amount = ft.Text(value="Общая сумма: 0", weight=ft.FontWeight.BOLD)
+class ExpenseDatabase:
+    def __init__(self, db_name="expenses.db"):
+    
+        self.conn = sqlite3.connect(db_name)
+        self.create_table()
 
-    expense_name_input = ft.TextField(label="Название расхода", expand=True)  
-    expense_amount_input = ft.TextField(label="Сумма расхода", width=150)  
-    save_button = ft.ElevatedButton(text="Добавить", on_click=add_expense)
+    def create_table(self):
+       
+        query = """
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            description TEXT NOT NULL,
+            amount REAL NOT NULL,
+            date TEXT DEFAULT CURRENT_DATE
+        )
+        """
+        self.conn.execute(query)
+        self.conn.commit()
 
-    input_row = ft.Row(controls=[expense_name_input, expense_amount_input, save_button])
+    def add_expense(self, description, amount):
+        
+        query = "INSERT INTO expenses (description, amount) VALUES (?, ?)"
+        self.conn.execute(query, (description, amount))
+        self.conn.commit()
 
-    def update_expenses_list():
-        expenses_list_view.controls.clear()
-        for expense in expenses:
-            expense_row = ft.Row(
-                controls=[
-                    ft.Text(expense['название'], expand=True),  
-                    ft.Text(f"{expense['сумма']} сом", color=ft.colors.BLUE, width=100, text_align=ft.TextAlign.RIGHT),  # Сумма справа и синим цветом
-                    ft.IconButton(ft.icons.EDIT),
-                    ft.IconButton(ft.icons.DELETE),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-            )
-            expenses_list_view.controls.append(expense_row)
-        page.update()
+    def get_all_expenses(self):
+       
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT id, description, amount, date FROM expenses ORDER BY date DESC")
+        return cursor.fetchall()
 
-    def update_total_amount():
-        total = sum(exp['сумма'] for exp in expenses)
-        total_amount.value = f"Общая сумма: {total} сом"
-        page.update()
+    def get_total_expenses(self):
+        
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT SUM(amount) FROM expenses")
+        result = cursor.fetchone()
+        return result[0] if result[0] is not None else 0.0
 
-    def add_expense(e):
-        name = expense_name_input.value.strip()
-        amount_str = expense_amount_input.value.strip()
-
-        if name and amount_str.isdigit():
-            amount = int(amount_str)
-            expense = {"название": name, "сумма": amount}
-            expenses.append(expense)
-
-            update_expenses_list()
-            update_total_amount()
-
-            expense_name_input.value = ""
-            expense_amount_input.value = ""
-            page.update()
-        else:
-            page.show_snack_bar(
-                ft.SnackBar(
-                    ft.Text("Пожалуйста, введите название расхода и корректную сумму."),
-                    open=True,
-                )
-            )
-
-    page.add(
-        input_row,
-        ft.Divider(),
-        ft.Text("Список расходов:", weight=ft.FontWeight.BOLD),
-        expenses_list_view,
-        ft.Divider(),
-        total_amount,
-    )
-
-if __name__ == "__main__":
-    ft.app(target=main)
+    def close(self):
+        
+        self.conn.close()
