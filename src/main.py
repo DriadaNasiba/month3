@@ -1,43 +1,42 @@
-import sqlite3
+from expense_db import ExpenseDatabase
 
-class ExpenseDatabase:
-    def __init__(self, db_name="expenses.db"):
-    
-        self.conn = sqlite3.connect(db_name)
-        self.create_table()
+def main():
+    db = ExpenseDatabase()
 
-    def create_table(self):
-       
-        query = """
-        CREATE TABLE IF NOT EXISTS expenses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            description TEXT NOT NULL,
-            amount REAL NOT NULL,
-            date TEXT DEFAULT CURRENT_DATE
-        )
-        """
-        self.conn.execute(query)
-        self.conn.commit()
+    while True:
+        print("\n=== Меню расходов ===")
+        print("1. Добавить расход")
+        print("2. Показать все расходы")
+        print("3. Общая сумма расходов")
+        print("4. Выход")
 
-    def add_expense(self, description, amount):
-        
-        query = "INSERT INTO expenses (description, amount) VALUES (?, ?)"
-        self.conn.execute(query, (description, amount))
-        self.conn.commit()
+        choice = input("Выберите действие: ")
 
-    def get_all_expenses(self):
-       
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT id, description, amount, date FROM expenses ORDER BY date DESC")
-        return cursor.fetchall()
+        if choice == "1":
+            desc = input("Описание: ")
+            try:
+                amount = float(input("Сумма: "))
+                db.add_expense(desc, amount)
+                print("✅ Расход добавлен.")
+            except ValueError:
+                print("❌ Ошибка: сумма должна быть числом.")
+        elif choice == "2":
+            expenses = db.get_all_expenses()
+            if expenses:
+                print("\nID | Описание | Сумма | Дата")
+                for e in expenses:
+                    print(f"{e[0]} | {e[1]} | {e[2]} | {e[3]}")
+            else:
+                print("Нет данных.")
+        elif choice == "3":
+            total = db.get_total_expenses()
+            print(f"💰 Общая сумма расходов: {total}")
+        elif choice == "4":
+            db.close()
+            print("До свидания!")
+            break
+        else:
+            print("Неверный ввод, попробуйте снова.")
 
-    def get_total_expenses(self):
-        
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT SUM(amount) FROM expenses")
-        result = cursor.fetchone()
-        return result[0] if result[0] is not None else 0.0
-
-    def close(self):
-        
-        self.conn.close()
+if __name__ == "__main__":
+    main()
