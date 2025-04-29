@@ -32,6 +32,17 @@ class ExpenseDatabase:
         cursor.execute("SELECT SUM(amount) FROM expenses")
         result = cursor.fetchone()
         return result[0] if result[0] is not None else 0.0
+    
+    def delete_expense(self, expense_id):
+        query = "DELETE FROM expenses WHERE id = ?"
+        self.conn.execute(query, (expense_id,))
+        self.conn.commit()
+
+    def update_expense(self, expense_id, description, amount):
+        query = "UPDATE expenses SET description = ?, amount = ? WHERE id = ?"
+        self.conn.execute(query, (description, amount, expense_id))
+        self.conn.commit()
+
 
     def close(self):
         self.conn.close()
